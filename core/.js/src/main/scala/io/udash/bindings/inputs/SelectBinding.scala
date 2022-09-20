@@ -1,12 +1,14 @@
 package io.udash.bindings.inputs
 
 import io.udash._
-import org.scalajs.dom.Event
+import org.scalajs.dom.{Event, window}
 import org.scalajs.dom.html.Select
 import scalatags.JsDom.all._
 
+import scala.concurrent.duration.Duration
+
 private[inputs] class SelectBinding[T](
-  options: ReadableSeqProperty[T], label: T => Modifier, labelNoValue: Option[Modifier], selectModifiers: Modifier*
+  options: ReadableSeqProperty[T], label: T => Modifier, labelNoValue: Option[Modifier], debounce: Option[Duration], selectModifiers: Modifier*
 )(
   checkedIf: T => ReadableProperty[Boolean],
   refreshSelection: Seq[T] => Unit,
@@ -33,7 +35,19 @@ private[inputs] class SelectBinding[T](
     }
   ).render
 
-  selector.onchange = onChange(selector)
+  var propertyUpdateHandler: Int = 0
+  val callback = if (debounce.nonEmpty && debounce.get.toMillis > 0) {
+    e: Event => {
+      if (propertyUpdateHandler != 0) window.clearTimeout(propertyUpdateHandler)
+      propertyUpdateHandler = window.setTimeout(() => {
+        onChange(selector)(e)
+      }, debounce.get.toMillis.toDouble)
+    }
+  } else {
+    e: Event => onChange(selector)(e)
+  }
+
+  selector.onchange = callback
 
   override def render: Select = selector
 }

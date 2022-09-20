@@ -5,7 +5,12 @@ import io.udash.properties.seq.SeqProperty
 import io.udash.testing.UdashFrontendTest
 import org.scalactic.source.Position
 import org.scalajs.dom.html.{Option => JSOption, Select => JSSelect}
+import org.scalajs.dom.window
 import scalatags.JsDom.all.StringFrag
+
+import scala.concurrent.{Await, Promise}
+import scala.concurrent.duration.DurationLong
+import scala.util.Success
 
 class SelectTest extends UdashFrontendTest {
   "Select" should {
@@ -13,7 +18,7 @@ class SelectTest extends UdashFrontendTest {
       val options = Seq("A", "B", "C", "D", "E")
       val p = Property[String]("B")
 
-      val select = Select(p, options.toSeqProperty)(Select.defaultLabel).render
+      val select = Select(p, options.toSeqProperty, 0 millis)(Select.defaultLabel).render
 
       select.childElementCount should be(5)
       select.value should be("1")
@@ -28,7 +33,7 @@ class SelectTest extends UdashFrontendTest {
       val options = Seq("A", "B", "C", "D", "E")
       val p = Property[String]("B")
 
-      val select = Select(p, options.toSeqProperty)(Select.defaultLabel).render
+      val select = Select(p, options.toSeqProperty, 0 millis)(Select.defaultLabel).render
 
       select.childElementCount should be(5)
 
@@ -39,11 +44,12 @@ class SelectTest extends UdashFrontendTest {
       }
     }
 
+
     "synchronise visible options" in {
       val options = SeqProperty("A", "B", "C", "D", "E")
       val p = Property[String]("B")
 
-      val select = Select(p, options)(Select.defaultLabel)
+      val select = Select(p, options, 0 millis)(Select.defaultLabel)
       val selectElement = select.render
 
       selectElement.childElementCount should be(5)
@@ -85,8 +91,8 @@ class SelectTest extends UdashFrontendTest {
     "synchronise with two inputs bound to a single property" in {
       val p = Property[Int](2)
       val options: Seq[Int] = 0 until 5
-      val input = Select(p, options.toSeqProperty)(v => StringFrag(v.toString))
-      val input2 = Select(p, options.toSeqProperty)(v => StringFrag(v.toString))
+      val input = Select(p, options.toSeqProperty, 0 millis)(v => StringFrag(v.toString))
+      val input2 = Select(p, options.toSeqProperty, 0 millis)(v => StringFrag(v.toString))
 
       val r = input.render
       val r2 = input2.render
@@ -130,7 +136,7 @@ class SelectTest extends UdashFrontendTest {
       val options = Seq(Some("A"), None, Some("B"))
       val p = Property[Option[Option[String]]](Some(None))
 
-      val select = Select.optional(p, options.toSeqProperty,StringFrag("empty"))(x => StringFrag(x.getOrElse(""))).render
+      val select = Select.optional(p, options.toSeqProperty,StringFrag("empty"), 0 millis)(x => StringFrag(x.getOrElse(""))).render
 
       select.childElementCount should be(4) // empty value should be included
       select.value should be("1")
